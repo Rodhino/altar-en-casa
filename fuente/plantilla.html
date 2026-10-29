@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Altar en casa</title>
+<meta name="description" content="Altar en casa: pon las fotos de tus seres queridos y proyecta tu altar de muertos en una tableta, celular o tele. Las fotos se quedan en tu aparato.">
+<meta name="theme-color" content="#170d1f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Altar en casa">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Tres vistas por hash: #inicio (mis seres queridos), #editar (agregar o cambiar a uno), #altar (altar a pantalla completa). Mismo look de noche de velas que el altar del evento. */
+:root{
+  --noche:#170d1f; --noche-2:#24142f; --linea:#3d2650;
+  --cempa:#f59a1b; --cempa-claro:#ffc35a; --rosa:#e0337f; --morado:#7b3fa8; --verde:#2f9e6e;
+  --texto:#f7ecdf; --tenue:#c4aebb;
+  --display:"Yeseva One", Georgia, "Times New Roman", serif;
+  --cuerpo:"Barlow", "Helvetica Neue", Arial, sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--noche);color:var(--texto);font-family:var(--cuerpo);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+img{max-width:100%}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cempa-claro);outline-offset:2px}
+
+/* ---------- papel picado ---------- */
+.picado{display:flex;justify-content:center;gap:6px;position:relative;z-index:3;pointer-events:none;overflow:hidden}
+.picado::before{content:"";position:absolute;left:0;right:0;top:4px;height:2px;background:var(--tenue);opacity:.5}
+.bandera{flex:0 0 auto;width:clamp(48px,8vw,100px);aspect-ratio:4/5;margin-top:5px;transform-origin:top center;
+  animation:mecer 4s ease-in-out infinite alternate;
+  clip-path:polygon(0 0,100% 0,100% 88%,90% 100%,80% 88%,70% 100%,60% 88%,50% 100%,40% 88%,30% 100%,20% 88%,10% 100%,0 88%);
+  -webkit-mask:var(--calavera) center/100% 100% no-repeat; mask:var(--calavera) center/100% 100% no-repeat;
+  opacity:.92}
+.bandera:nth-child(5n+1){background:var(--rosa)} .bandera:nth-child(5n+2){background:var(--cempa)}
+.bandera:nth-child(5n+3){background:var(--morado)} .bandera:nth-child(5n+4){background:var(--verde)}
+.bandera:nth-child(5n){background:var(--cempa-claro)}
+.bandera:nth-child(odd){animation-delay:-2s}
+@keyframes mecer{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+
+/* ---------- comunes ---------- */
+.envoltura{width:100%;max-width:980px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;font-weight:600;text-decoration:none;text-align:center}
+.btn-principal{background:var(--cempa);color:#2a1300}
+.btn-principal:hover{background:var(--cempa-claro)}
+.btn-principal:disabled{opacity:.6;cursor:wait}
+.btn-secundario{background:transparent;color:var(--texto);box-shadow:inset 0 0 0 2px var(--rosa)}
+.btn-secundario:hover{background:color-mix(in srgb,var(--rosa) 20%,transparent)}
+.btn-grande{font-size:1.2rem;padding:18px 34px;box-shadow:0 0 0 4px color-mix(in srgb,var(--cempa) 30%,transparent),0 12px 30px #0008}
+.btn-chico{padding:8px 16px;font-size:.9rem}
+.btn-peligro{background:transparent;color:#ff8fb5;box-shadow:inset 0 0 0 2px #ff8fb5}
+.aviso{font-size:.92rem;color:var(--tenue);margin:0}
+.aviso.error{color:#ff8fb5}
+.aviso.ok{color:var(--cempa-claro)}
+.enlace{background:none;border:0;padding:0;color:var(--cempa-claro);text-decoration:underline;cursor:pointer;font:inherit}
+
+/* ---------- inicio ---------- */
+.portada{display:grid;justify-items:center;text-align:center;gap:clamp(14px,2.6vh,24px);padding-block:clamp(12px,4vh,40px) 28px}
+.portada h1{font-size:clamp(2.4rem,9vw,4.2rem);line-height:1;color:var(--cempa-claro)}
+.portada .sub{margin:0;color:var(--tenue);max-width:36ch;font-size:1.08rem}
+.familia{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--tenue);font-size:.95rem}
+.familia input{background:transparent;border:0;border-bottom:1px dashed var(--linea);border-radius:0;padding:2px 4px;width:13em;text-align:center;color:var(--texto)}
+.familia input:focus{border-bottom-color:var(--cempa)}
+.botones{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.instalar{display:grid;gap:10px;justify-items:center;background:var(--noche-2);border:1px solid var(--linea);border-radius:16px;padding:14px 18px;max-width:34rem;margin:0 auto 26px;text-align:center}
+.instalar p{margin:0;color:var(--tenue);font-size:.95rem}
+.instalar strong{color:var(--texto)}
+.seccion-t{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
+.seccion-t h2{font-size:1.5rem}
+.seccion-t span{color:var(--tenue);font-size:.92rem}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.tarjeta{background:var(--noche-2);border-radius:90px 90px 12px 12px;overflow:hidden;border:1px solid var(--linea);display:flex;flex-direction:column;cursor:pointer;text-align:left;padding:0;color:inherit}
+.tarjeta:hover{border-color:var(--cempa)}
+.tarjeta img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.tarjeta div{padding:8px 10px 12px;display:grid;gap:2px;min-width:0}
+.tarjeta strong{font-family:var(--display);font-weight:400;font-size:1.08rem;overflow-wrap:anywhere}
+.tarjeta span{font-size:.82rem;color:var(--tenue);overflow-wrap:anywhere}
+.tarjeta.nueva{text-decoration:none;display:grid;place-items:center;align-content:center;gap:8px;min-height:220px;border:2px dashed var(--linea);background:transparent;color:var(--cempa-claro);font-weight:600;text-align:center;padding:16px}
+.tarjeta.nueva b{font-family:var(--display);font-weight:400;font-size:2.6rem;line-height:1}
+.ajustes{margin-top:32px;display:grid;gap:12px;background:var(--noche-2);border:1px solid var(--linea);border-radius:16px;padding:16px 18px}
+.ajustes summary{cursor:pointer;font-weight:600;color:var(--cempa-claro)}
+.ajustes .fila-aj{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ajustes p{margin:0;color:var(--tenue);font-size:.92rem}
+.opciones{display:flex;flex-wrap:wrap;gap:8px}
+.opciones label{display:flex;gap:8px;align-items:center;border:1px solid var(--linea);border-radius:999px;padding:7px 14px;cursor:pointer;background:var(--noche);font-size:.95rem}
+.opciones label:has(input:checked){border-color:var(--cempa);background:color-mix(in srgb,var(--cempa) 18%,transparent)}
+.opciones input{accent-color:var(--cempa)}
+.privado{display:flex;gap:10px;align-items:flex-start;margin:22px auto 0;max-width:40rem;color:var(--tenue);font-size:.92rem;text-align:left}
+.privado b{color:var(--texto)}
+.creditos{margin-top:40px;padding-top:18px;border-top:1px solid var(--linea);color:var(--tenue);font-size:.85rem;display:grid;gap:4px}
+.creditos p{margin:0}
+.creditos strong{color:var(--texto);font-weight:600}
+
+/* ---------- editar ---------- */
+form{display:grid;gap:18px;background:var(--noche-2);border:1px solid var(--linea);border-radius:18px;padding:22px;max-width:640px;margin:0 auto}
+form > h2{font-size:clamp(1.5rem,5.5vw,2rem);line-height:1.1;color:var(--cempa-claro)}
+label.campo{display:grid;gap:6px;font-weight:600}
+label.campo small{font-weight:400;color:var(--tenue)}
+input[type=text],textarea{background:var(--noche);border:1px solid var(--linea);border-radius:10px;padding:11px 12px;width:100%}
+textarea{resize:vertical;min-height:84px}
+.foto-caja{display:grid;place-items:center;aspect-ratio:4/5;max-width:220px;width:100%;justify-self:center;border:2px dashed var(--linea);border-radius:120px 120px 14px 14px;cursor:pointer;overflow:hidden;background:var(--noche);color:var(--tenue);text-align:center;font-weight:400;position:relative;padding:12px}
+.foto-caja:hover{border-color:var(--cempa)}
+.foto-caja img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.foto-caja input,.oculto{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.foto-botones{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.dos{grid-template-columns:1fr}}
+.gustos-caja summary{cursor:pointer;color:var(--cempa-claro);font-weight:600;font-size:.95rem;margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;max-height:280px;overflow-y:auto;padding:8px 4px 0 0}
+.cat{flex-basis:100%;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--cempa-claro);margin-top:6px}
+.chip{border:1px solid var(--linea);background:var(--noche);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.92rem}
+.chip[aria-pressed="true"]{background:var(--cempa);border-color:var(--cempa);color:#2a1300;font-weight:600}
+.nav-form{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+.nav-form .btn-principal{margin-left:auto;font-size:1.05rem;padding:14px 28px}
+
+/* ---------- altar ---------- */
+#vista-altar{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 85%,#3a1a3f 0%,var(--noche) 62%);cursor:none}
+#vista-altar.mostrar{cursor:default}
+#petalos{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.altar-picado{position:absolute;top:0;left:0;right:0}
+.altar-picado .bandera{width:clamp(44px,6.5vw,84px)}
+.escena{position:absolute;top:clamp(64px,13vh,120px);bottom:calc(40px + env(safe-area-inset-bottom,0px));left:max(16px,3vw);right:max(16px,3vw);display:grid;z-index:2}
+.retrato{grid-area:1/1;display:grid;grid-template-columns:minmax(0,1.618fr) minmax(0,1fr);gap:clamp(16px,3vw,48px);align-items:center;min-height:0;
+  opacity:0;transform:translateY(14px);transition:opacity 1.6s ease,transform 1.6s ease}
+.retrato.visible{opacity:1;transform:none}
+.retrato > svg{width:100%;height:100%;min-height:0;display:block;overflow:visible}
+.flama{transform-box:fill-box;transform-origin:50% 100%;animation:flama 1.4s ease-in-out infinite alternate}
+.flama.b{animation-duration:1s;animation-delay:-.4s}
+.halo{animation:halo 2.2s ease-in-out infinite alternate}
+.humo{animation:humo 6s linear infinite;opacity:0}
+.humo.b{animation-delay:-2s}.humo.c{animation-delay:-4s}
+@keyframes flama{0%{transform:scale(1,1) rotate(-2deg)}50%{transform:scale(.9,1.12) rotate(2deg)}100%{transform:scale(1.06,.94) rotate(-1deg)}}
+@keyframes halo{from{opacity:.75}to{opacity:1}}
+@keyframes humo{0%{opacity:0;transform:translateY(0)}20%{opacity:.5}100%{opacity:0;transform:translateY(-120px)}}
+.datos{min-width:0;max-height:100%;overflow:hidden;display:grid;gap:clamp(6px,1.2vh,14px);align-content:center;max-width:34em}
+.datos .eti{font-size:clamp(.75rem,1.1vw,1rem);letter-spacing:.18em;text-transform:uppercase;color:var(--cempa-claro)}
+.datos h2{font-size:clamp(1.6rem,3.6vw,3.6rem);line-height:1.05;overflow-wrap:anywhere}
+.datos .anios{font-size:clamp(.9rem,1.3vw,1.2rem);color:var(--tenue)}
+.gustos{margin:0;font-size:clamp(.9rem,1.3vw,1.2rem);line-height:1.45}
+.datos blockquote{margin:0;font-style:italic;font-size:clamp(.9rem,1.3vw,1.2rem);max-width:40ch;border-left:4px solid var(--rosa);padding-left:.8em;overflow-wrap:anywhere}
+@media (max-aspect-ratio:1/1){
+  .retrato{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.618fr) minmax(0,1fr);gap:8px;justify-items:center;text-align:center}
+  .datos{align-self:start}
+  .datos blockquote{border-left:0;padding-left:0}
+}
+/* todos juntos: los retratos en fila, como en la mesa del altar de la casa */
+.juntos{grid-area:1/1;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(6px,1.5vh,16px);min-height:0;opacity:0;transition:opacity 1.6s ease}
+.juntos.visible{opacity:1}
+/* el tamaño de cada retrato lo calcula ajustarJuntos() para que quepan todos sin deformarse */
+.marcos{display:flex;flex-wrap:wrap;gap:var(--hueco) var(--hueco);min-height:0;justify-content:center;align-content:center;overflow:hidden}
+.marco{display:grid;justify-items:center;gap:6px;margin:0;width:calc(var(--alto) * .8)}
+.marco img{width:100%;height:var(--alto);object-fit:cover;border-radius:999px 999px 10px 10px;border:clamp(4px,.6vw,8px) solid #c8902e;
+  box-shadow:0 0 0 clamp(3px,.4vw,6px) var(--cempa),0 0 40px color-mix(in srgb,var(--cempa) 45%,transparent)}
+.marco figcaption{font-family:var(--display);font-size:clamp(.85rem,1.6vw,1.6rem);line-height:1.1;text-align:center;overflow-wrap:anywhere;max-width:100%}
+.marco figcaption small{display:block;font-family:var(--cuerpo);font-size:.62em;color:var(--tenue)}
+.juntos > svg{width:100%;height:clamp(70px,15vh,150px);display:block;overflow:visible}
+.vacio-altar{grid-area:1/1;display:grid;place-items:center;align-content:center;gap:16px;text-align:center;z-index:4}
+.vacio-altar h2{font-size:clamp(1.8rem,5vw,3.4rem);color:var(--cempa-claro)}
+.vacio-altar p{margin:0;color:var(--tenue);max-width:30ch}
+.controles{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));left:calc(10px + env(safe-area-inset-left,0px));z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .4s}
+#vista-altar.mostrar .controles{opacity:1;pointer-events:auto}
+.controles .btn{padding:9px 15px;font-size:.92rem;background:color-mix(in srgb,var(--noche) 78%,transparent);color:var(--texto);box-shadow:inset 0 0 0 1px var(--linea)}
+.controles .btn[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--cempa)}
+.credito-altar{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;font-size:clamp(.62rem,.9vw,.8rem);color:var(--tenue);opacity:.55;max-width:70vw}
+.titulo-altar{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;font-family:var(--display);font-size:clamp(.8rem,1.4vw,1.2rem);color:var(--cempa-claro);opacity:.85}
+@media (max-aspect-ratio:1/1){.credito-altar{max-width:48vw}.titulo-altar{max-width:46vw;text-align:right}}
+@media (prefers-reduced-motion:reduce){.bandera,.flama,.halo,.humo{animation:none}.humo{opacity:.3}.retrato,.juntos{transition:opacity .3s}}
+</style>
+</head>
+<body>
+
+<section id="vista-inicio" hidden>
+  <div class="picado" aria-hidden="true" id="picado-inicio"></div>
+  <div class="envoltura">
+    <div class="portada">
+      <h1>Altar en casa</h1>
+      <p class="sub">Pon las fotos de tus seres queridos y enciende su altar en la tableta, el celular o la tele, junto a tu ofrenda.</p>
+      <label class="familia">Altar de <input type="text" id="familia" placeholder="la familia…" maxlength="40" autocomplete="off"></label>
+      <div class="botones">
+        <a class="btn btn-principal btn-grande" href="#altar" id="encender">Encender el altar</a>
+      </div>
+    </div>
+
+    <div class="instalar" id="instalar" hidden>
+      <p id="instalar-txt"><strong>Instálala en este aparato</strong> para abrirla como una app, a pantalla completa y sin internet.</p>
+      <button class="btn btn-secundario btn-chico" id="instalar-btn" type="button" hidden>Instalar</button>
+    </div>
+
+    <div class="seccion-t"><h2>Mis seres queridos</h2><span id="conteo"></span></div>
+    <div class="tarjetas" id="tarjetas"></div>
+
+    <p class="privado"><span aria-hidden="true">🕯️</span><span><b>Las fotos se quedan en este aparato.</b> No se suben a internet ni las ve nadie más. Si quieres pasarlas a otro aparato (por ejemplo, del celular a la tableta), usa “Guardar respaldo” abajo.</span></p>
+
+    <details class="ajustes" id="ajustes">
+      <summary>Ajustes del altar</summary>
+      <p>Cómo se ve el altar</p>
+      <div class="opciones" id="estilos">
+        <label><input type="radio" name="estilo" value="retrato"> Retrato grande, uno por uno</label>
+        <label><input type="radio" name="estilo" value="altar"> Altar de tres niveles, uno por uno</label>
+        <label><input type="radio" name="estilo" value="juntos"> Todos juntos</label>
+      </div>
+      <p>Tiempo de cada retrato</p>
+      <div class="opciones" id="tiempos">
+        <label><input type="radio" name="tiempo" value="15"> 15 s</label>
+        <label><input type="radio" name="tiempo" value="30"> 30 s</label>
+        <label><input type="radio" name="tiempo" value="60"> 1 min</label>
+        <label><input type="radio" name="tiempo" value="180"> 3 min</label>
+      </div>
+      <p>Respaldo: guarda un archivo con tus fotos y datos, y ábrelo en otro aparato para tener el mismo altar.</p>
+      <div class="fila-aj">
+        <button class="btn btn-secundario btn-chico" id="exportar" type="button">Guardar respaldo</button>
+        <label class="btn btn-secundario btn-chico" for="importar">Abrir respaldo<input type="file" id="importar" accept=".json,application/json" class="oculto"></label>
+      </div>
+      <p class="aviso" id="aviso-aj" role="status"></p>
+    </details>
+
+    <footer class="creditos">
+      <p><strong>Altar en casa</strong> · © 2026 Rodhino. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</section>
+
+<section id="vista-editar" hidden>
+  <div class="picado" aria-hidden="true" id="picado-editar"></div>
+  <div class="envoltura">
+    <form id="form" novalidate>
+      <h2 id="form-titulo">Agrega a un ser querido</h2>
+      <label class="foto-caja" id="foto-caja" for="foto"><span id="foto-texto">Toca para elegir su foto</span><input type="file" id="foto" accept="image/*"></label>
+      <div class="foto-botones">
+        <label class="btn btn-secundario btn-chico" for="foto">Elegir de mis fotos</label>
+        <label class="btn btn-secundario btn-chico" for="foto-cam">Tomar foto<input type="file" id="foto-cam" accept="image/*" capture="environment" class="oculto"></label>
+      </div>
+      <label class="campo">Su nombre<input type="text" id="nombre" maxlength="80" autocomplete="off" placeholder="Por ejemplo: María Elena López"></label>
+      <div class="dos">
+        <label class="campo">Años <small>opcional</small><input type="text" id="anios" maxlength="30" autocomplete="off" placeholder="1938 – 2021"></label>
+        <label class="campo">Quién fue <small>opcional</small><input type="text" id="quienFue" maxlength="60" autocomplete="off" placeholder="Mi abuela, mi papá…"></label>
+      </div>
+      <div class="campo">
+        <label class="campo" for="comidas">Le gustaba <small>separa con comas</small></label>
+        <input type="text" id="comidas" maxlength="300" autocomplete="off" placeholder="Mole, café de olla, cantar…">
+        <details class="gustos-caja"><summary>Elegir comidas y bebidas de la lista</summary><div class="chips" id="chips"></div></details>
+      </div>
+      <label class="campo">Unas palabras para recordarle <small>opcional</small><textarea id="mensaje" maxlength="400" placeholder="Siempre nos recibía con un abrazo…"></textarea></label>
+      <p class="aviso" id="aviso" role="status"></p>
+      <div class="nav-form">
+        <a class="btn btn-secundario" href="#inicio">Cancelar</a>
+        <button class="btn btn-peligro btn-chico" id="quitar" type="button" hidden>Quitar del altar</button>
+        <button class="btn btn-principal" id="guardar" type="submit">Poner en el altar</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section id="vista-altar" hidden>
+  <canvas id="petalos" aria-hidden="true"></canvas>
+  <div class="picado altar-picado" aria-hidden="true" id="picado-altar"></div>
+  <div class="controles">
+    <button class="btn" id="c-ant" type="button" aria-label="Anterior">‹ Anterior</button>
+    <button class="btn" id="c-pausa" type="button" aria-pressed="false">Pausa</button>
+    <button class="btn" id="c-sig" type="button" aria-label="Siguiente">Siguiente ›</button>
+    <button class="btn" id="c-estilo" type="button">Cambiar vista</button>
+    <button class="btn" id="c-completa" type="button">Pantalla completa</button>
+    <a class="btn" href="#inicio">Salir</a>
+  </div>
+  <div class="escena" id="escena"></div>
+  <p class="credito-altar">Altar en casa · © 2026 Rodhino</p>
+  <p class="titulo-altar" id="titulo-altar"></p>
+</section>
+
+<script>
+(() => {
+  const MENU = {
+    "Comidas": ["Mole poblano","Mole negro","Tamales","Pozole","Birria","Enchiladas","Chiles en nogada","Chiles rellenos","Tacos al pastor","Carnitas","Barbacoa","Cochinita pibil","Menudo","Sopes","Gorditas","Tortas ahogadas","Quesadillas","Chilaquiles","Frijoles de la olla","Arroz rojo","Caldo de res","Pescado a la talla","Tortillas hechas a mano","Pan de muerto"],
+    "Bebidas": ["Atole","Champurrado","Chocolate caliente","Café de olla","Agua de jamaica","Agua de horchata","Agua de tamarindo","Tejuino","Pulque","Mezcal","Tequila","Raicilla","Cerveza","Refresco","Ponche de frutas","Rompope"],
+    "Dulces": ["Calaveritas de azúcar","Calabaza en tacha","Camote enmielado","Dulce de tejocote","Alegrías","Cocadas","Jamoncillo","Ate","Obleas","Arroz con leche","Buñuelos","Churros","Gelatina","Pan de muerto relleno","Dulce de leche","Mazapán"],
+    "Frutas y más": ["Naranjas","Guayabas","Mandarinas","Plátanos","Cañas","Jícama","Tejocotes","Cacahuates","Cigarros","Flores de cempasúchil","Copal","Sal y agua"]
+  };
+  const $ = id => document.getElementById(id);
+  let seres = [];   // {id, nombre, anios, quienFue, comidas[], mensaje, foto, creado}
+
+  // ---------- ajustes (pocos datos: van en localStorage) ----------
+  const AJ = "altar-en-casa-ajustes";
+  const ajustes = Object.assign({familia:"", estilo:"retrato", tiempo:30}, (() => { try { return JSON.parse(localStorage.getItem(AJ)||"{}"); } catch { return {}; } })());
+  const guardarAjustes = () => { try { localStorage.setItem(AJ, JSON.stringify(ajustes)); } catch {} };
+
+  // ---------- base de datos en el aparato (IndexedDB): las fotos nunca salen de aquí ----------
+  const abrirDB = new Promise((ok, mal) => {
+    const r = indexedDB.open("altar-en-casa", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("seres", {keyPath:"id"});
+    r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error);
+  });
+  async function tx(modo, fn){
+    const db = await abrirDB;
+    return new Promise((ok, mal) => {
+      const t = db.transaction("seres", modo), s = t.objectStore("seres"), r = fn(s);
+      t.oncomplete = () => ok(r && r.result); t.onerror = () => mal(t.error); t.onabort = () => mal(t.error);
+    });
+  }
+  const leerTodos = () => tx("readonly", s => s.getAll());
+  const guardarSer = o => tx("readwrite", s => s.put(o));
+  const quitarSer = id => tx("readwrite", s => s.delete(id));
+  async function cargar(){
+    seres = ((await leerTodos()) || []).sort((a,b) => (a.creado||0) - (b.creado||0));
+  }
+  // pide al navegador que no borre los datos si se llena el aparato
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+
+  // ---------- papel picado ----------
+/*@@MASCARA@@*/
+  document.documentElement.style.setProperty("--calavera", MASCARA);
+  const banderas = n => Array.from({length:n},()=> '<div class="bandera"></div>').join("");
+  $("picado-inicio").innerHTML = banderas(14);
+  $("picado-editar").innerHTML = banderas(14);
+  $("picado-altar").innerHTML = banderas(18);
+
+  // ---------- inicio ----------
+  const famInput = $("familia");
+  famInput.value = ajustes.familia;
+  famInput.addEventListener("input", () => { ajustes.familia = famInput.value.trim(); guardarAjustes(); });
+  const tituloAltar = () => ajustes.familia ? "Altar de " + ajustes.familia : "";
+
+  function pintarInicio(){
+    const cont = $("tarjetas"); cont.textContent = "";
+    seres.forEach(o => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "tarjeta";
+      b.setAttribute("aria-label", "Cambiar o quitar a " + o.nombre);
+      const im = new Image(); im.src = o.foto; im.alt = "";
+      const d = document.createElement("div");
+      const s = document.createElement("strong"); s.textContent = o.nombre;
+      const sp = document.createElement("span"); sp.textContent = [o.quienFue, o.anios].filter(Boolean).join(" · ") || "Toca para cambiar";
+      d.append(s, sp); b.append(im, d);
+      b.onclick = () => location.hash = "#editar/" + o.id;
+      cont.appendChild(b);
+    });
+    const n = document.createElement("a"); n.className = "tarjeta nueva"; n.href = "#editar";
+    n.innerHTML = "<b>+</b>Agregar a un ser querido";
+    cont.appendChild(n);
+    $("conteo").textContent = seres.length ? (seres.length === 1 ? "1 en el altar" : seres.length + " en el altar") : "";
+    const enc = $("encender");
+    enc.href = seres.length ? "#altar" : "#editar";
+    enc.textContent = seres.length ? "Encender el altar" : "Agregar a un ser querido";
+  }
+
+  // ajustes
+  const marcar = (nombre, valor) => document.querySelectorAll(`input[name=${nombre}]`).forEach(i => i.checked = i.value === String(valor));
+  marcar("estilo", ajustes.estilo); marcar("tiempo", ajustes.tiempo);
+  document.querySelectorAll("input[name=estilo]").forEach(i => i.onchange = () => { ajustes.estilo = i.value; guardarAjustes(); });
+  document.querySelectorAll("input[name=tiempo]").forEach(i => i.onchange = () => { ajustes.tiempo = +i.value; guardarAjustes(); });
+
+  // respaldo: un archivo .json con todo, para pasarlo a otro aparato
+  const avisoAj = (t, tipo) => { const a = $("aviso-aj"); a.textContent = t; a.className = "aviso" + (tipo ? " " + tipo : ""); };
+  $("exportar").onclick = () => {
+    if (!seres.length){ avisoAj("Todavía no hay nadie en el altar.", "error"); return; }
+    const datos = {app:"altar-en-casa", version:1, familia:ajustes.familia, seres};
+    const url = URL.createObjectURL(new Blob([JSON.stringify(datos)], {type:"application/json"}));
+    const a = document.createElement("a"); a.href = url; a.download = "altar-en-casa-respaldo.json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    avisoAj("Listo. Busca el archivo en tus descargas y ábrelo con “Abrir respaldo” en el otro aparato.", "ok");
+  };
+  $("importar").onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try {
+      const datos = JSON.parse(await f.text());
+      if (datos.app !== "altar-en-casa" || !Array.isArray(datos.seres)) throw new Error("formato");
+      let n = 0;
+      for (const o of datos.seres){
+        if (!o || typeof o.id !== "string" || typeof o.nombre !== "string" || typeof o.foto !== "string" || !o.foto.startsWith("data:image/")) continue;
+        await guardarSer({id:o.id, nombre:o.nombre.slice(0,80), anios:String(o.anios||"").slice(0,30), quienFue:String(o.quienFue||"").slice(0,60),
+          comidas:Array.isArray(o.comidas) ? o.comidas.map(String).slice(0,30) : [], mensaje:String(o.mensaje||"").slice(0,400), foto:o.foto, creado:+o.creado || Date.now()});
+        n++;
+      }
+      if (!ajustes.familia && datos.familia){ ajustes.familia = String(datos.familia).slice(0,40); famInput.value = ajustes.familia; guardarAjustes(); }
+      await cargar(); pintarInicio();
+      avisoAj(n ? `Se abrió el respaldo: ${n === 1 ? "1 ser querido" : n + " seres queridos"} en el altar.` : "El archivo no tenía a nadie.", n ? "ok" : "error");
+    } catch {
+      avisoAj("Ese archivo no es un respaldo de Altar en casa.", "error");
+    }
+  };
+
+  // instalar en el aparato
+  let pedirInstalar = null;
+  const instalada = () => matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone;
+  const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function pintarInstalar(){
+    const caja = $("instalar");
+    if (instalada()){ caja.hidden = true; return; }
+    caja.hidden = false;
+    if (pedirInstalar){
+      $("instalar-btn").hidden = false;
+      $("instalar-txt").innerHTML = "<strong>Instálala en este aparato</strong> para abrirla como una app, a pantalla completa y sin internet.";
+    } else if (esIOS){
+      $("instalar-btn").hidden = true;
+      $("instalar-txt").innerHTML = "<strong>Para instalarla en iPhone o iPad:</strong> abre esta página en Safari, toca el botón Compartir (el cuadrito con la flecha) y elige “Agregar a inicio”.";
+    } else {
+      $("instalar-btn").hidden = true;
+      $("instalar-txt").innerHTML = "<strong>Para instalarla:</strong> abre el menú del navegador (los tres puntitos) y elige “Instalar app” o “Agregar a la pantalla principal”.";
+    }
+  }
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); pedirInstalar = e; pintarInstalar(); });
+  addEventListener("appinstalled", () => { pedirInstalar = null; pintarInstalar(); });
+  $("instalar-btn").onclick = async () => { if (!pedirInstalar) return; pedirInstalar.prompt(); await pedirInstalar.userChoice.catch(()=>{}); pedirInstalar = null; pintarInstalar(); };
+
+  // ---------- editar ----------
+  const chips = $("chips"), inputComidas = $("comidas");
+  const leerComidas = () => inputComidas.value.split(",").map(s=>s.trim()).filter(Boolean);
+  const pintarChips = () => {
+    const sel = new Set(leerComidas().map(s=>s.toLowerCase()));
+    chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", sel.has(c.dataset.c.toLowerCase())));
+  };
+  Object.entries(MENU).forEach(([cat, lista]) => {
+    const h = document.createElement("span"); h.className = "cat"; h.textContent = cat; chips.appendChild(h);
+    lista.forEach(c => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = c; b.dataset.c = c; b.setAttribute("aria-pressed","false");
+      b.onclick = () => {
+        const l = leerComidas(), i = l.findIndex(x=>x.toLowerCase()===c.toLowerCase());
+        if (i>=0) l.splice(i,1); else l.push(c);
+        inputComidas.value = l.join(", "); pintarChips();
+      };
+      chips.appendChild(b);
+    });
+  });
+  inputComidas.addEventListener("input", pintarChips);
+
+  // la foto se reduce en el aparato para que el altar cargue rápido
+  function reducir(file, max){
+    return new Promise((ok, mal) => {
+      const r = new FileReader();
+      r.onerror = mal;
+      r.onload = () => {
+        const img = new Image();
+        img.onerror = mal;
+        img.onload = () => {
+          let lado = 1400, q = .86, url;
+          do {
+            const k = Math.min(1, lado / Math.max(img.width, img.height));
+            const c = document.createElement("canvas");
+            c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+            c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+            url = c.toDataURL("image/jpeg", q);
+            lado *= .85; q = Math.max(.6, q-.06);
+          } while (url.length > max && lado > 300);
+          ok(url);
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
+  }
+  let fotoDato = null, editando = null;
+  const aviso = (t, tipo) => { const a = $("aviso"); a.textContent = t; a.className = "aviso" + (tipo ? " " + tipo : ""); };
+  function ponerFoto(url){
+    fotoDato = url;
+    const caja = $("foto-caja"); caja.querySelector("img")?.remove();
+    $("foto-texto").hidden = !!url;
+    if (url){ const im = new Image(); im.src = url; im.alt = "Foto elegida"; caja.appendChild(im); }
+  }
+  ["foto","foto-cam"].forEach(id => $(id).addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    aviso("Preparando la foto…");
+    try { ponerFoto(await reducir(f, 600000)); aviso(""); }
+    catch { aviso("No se pudo abrir esa foto. Prueba con otra.", "error"); }
+  }));
+
+  function abrirEditar(id){
+    editando = id ? seres.find(o => o.id === id) || null : null;
+    $("form").reset(); aviso("");
+    $("form-titulo").textContent = editando ? "Cambiar a " + editando.nombre : "Agrega a un ser querido";
+    $("guardar").textContent = editando ? "Guardar cambios" : "Poner en el altar";
+    $("quitar").hidden = !editando;
+    ponerFoto(editando ? editando.foto : null);
+    if (editando){
+      $("nombre").value = editando.nombre; $("anios").value = editando.anios || ""; $("quienFue").value = editando.quienFue || "";
+      inputComidas.value = (editando.comidas || []).join(", "); $("mensaje").value = editando.mensaje || "";
+    }
+    pintarChips();
+  }
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const nombre = $("nombre").value.trim();
+    if (!fotoDato){ aviso("Falta su foto.", "error"); $("foto-caja").scrollIntoView({block:"center", behavior:"smooth"}); return; }
+    if (!nombre){ aviso("Falta su nombre.", "error"); $("nombre").focus(); return; }
+    const o = {
+      id: editando ? editando.id : (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      nombre, anios:$("anios").value.trim(), quienFue:$("quienFue").value.trim(), comidas:leerComidas(), mensaje:$("mensaje").value.trim(),
+      foto:fotoDato, creado: editando ? editando.creado : Date.now()
+    };
+    $("guardar").disabled = true;
+    try { await guardarSer(o); await cargar(); location.hash = "#inicio"; }
+    catch { aviso("No se pudo guardar. Puede que el aparato esté lleno.", "error"); }
+    finally { $("guardar").disabled = false; }
+  });
+  $("quitar").onclick = async () => {
+    if (!editando || !confirm(`¿Quitar a ${editando.nombre} del altar? Se borra de este aparato.`)) return;
+    await quitarSer(editando.id); await cargar(); location.hash = "#inicio";
+  };
+
+  // ---------- dibujo del altar (el mismo del altar del evento) ----------
+  // en casa no hay fotos de platillos: los primeros gustos se ponen como platos con su nombre
+  const platillosDe = o => (o.comidas || []).slice(0,3).map(nombre => ({nombre}));
+/*@@DIBUJO@@*/
+
+  // tira de veladoras y cempasúchil al pie de "todos juntos"
+  function tiraVeladoras(){
+    const id = ++uid; let g = `<defs><radialGradient id="luz${id}"><stop offset="0" stop-color="#ffcf6b" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf6b" stop-opacity="0"/></radialGradient></defs>`;
+    g += `<rect x="0" y="150" width="1000" height="30" fill="#2b1810"/>`;
+    const rnd = azar(5);
+    for (let i=0;i<40;i++) g += `<ellipse cx="${(rnd()*1000).toFixed(1)}" cy="${(156+rnd()*20).toFixed(1)}" rx="${(4+rnd()*4).toFixed(1)}" ry="2.4" fill="${rnd()<.85?"#f59a1b":"#ffc35a"}"/>`;
+    g += florero(40, 152, 1.2) + florero(960, 152, 1.2) + calaverita(130, 152, 1.1) + calaverita(870, 152, 1.1, "#2f9e6e") + pan(230, 152, .9) + pan(770, 152, .9);
+    [[330,"#c62828",80],[400,"#f4efe4",64],[470,"#2e7d4f",72],[530,"#2e7d4f",72],[600,"#f4efe4",64],[670,"#c62828",80]].forEach(([x,c,h]) => g += veladora(x, 150, h, c, id));
+    return `<svg viewBox="0 30 1000 150" preserveAspectRatio="xMidYMax meet" aria-hidden="true">${g}</svg>`;
+  }
+
+  // ---------- vista altar ----------
+  const ESTILOS = ["retrato","altar","juntos"], POR_GRUPO = 12;
+  let indice = 0, pausa = false, siguienteEn = 0, mostrado = null, reloj = null;
+  const total = () => ajustes.estilo === "juntos" ? Math.ceil(seres.length / POR_GRUPO) : seres.length;
+
+  function fichaDatos(o){
+    const dat = document.createElement("div"); dat.className = "datos";
+    const add = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = txt; dat.appendChild(e); return e; };
+    add("span","eti","En memoria de");
+    add("h2","",o.nombre);
+    const linea = [o.quienFue, o.anios].filter(Boolean).join(" · ");
+    if (linea) add("div","anios",linea);
+    if (o.comidas?.length){ add("span","eti","Le gustaba"); add("p","gustos",o.comidas.join(" · ")); }
+    if (o.mensaje) add("blockquote","","“"+o.mensaje+"”");
+    return dat;
+  }
+  function vistaJuntos(grupo){
+    const j = document.createElement("div"); j.className = "juntos";
+    const m = document.createElement("div"); m.className = "marcos";
+    grupo.forEach(o => {
+      const f = document.createElement("figure"); f.className = "marco";
+      const im = new Image(); im.src = o.foto; im.alt = "Retrato de " + o.nombre;
+      const c = document.createElement("figcaption"); c.textContent = o.nombre;
+      if (o.anios){ const s = document.createElement("small"); s.textContent = o.anios; c.appendChild(s); }
+      f.append(im, c); m.appendChild(f);
+    });
+    j.appendChild(m); j.insertAdjacentHTML("beforeend", tiraVeladoras());
+    return j;
+  }
+  // prueba cuántas columnas dejan los retratos más grandes y fija ese alto
+  function ajustarJuntos(j){
+    const m = j.querySelector(".marcos"), n = m.children.length; if (!n) return;
+    const W = m.clientWidth, H = m.clientHeight, hueco = Math.max(10, Math.min(28, W*.02));
+    const pie = (m.querySelector("figcaption")?.offsetHeight || 30) + 6;
+    let mejor = 0;
+    for (let cols = 1; cols <= n; cols++){
+      const filas = Math.ceil(n/cols);
+      const alto = Math.min((H - hueco*(filas-1)) / filas - pie, ((W - hueco*(cols-1)) / cols - 2) * 1.25);
+      if (alto > mejor) mejor = alto;
+    }
+    m.style.setProperty("--hueco", hueco + "px");
+    m.style.setProperty("--alto", Math.max(40, Math.floor(mejor) - 12) + "px");
+  }
+  function pintarAltar(forzar){
+    const escena = $("escena");
+    $("titulo-altar").textContent = tituloAltar();
+    if (!seres.length){
+      if (mostrado === "vacio") return; mostrado = "vacio"; escena.textContent = "";
+      escena.innerHTML = '<div class="vacio-altar"><h2>El altar espera</h2><p>Agrega la foto de un ser querido para encender su altar.</p><a class="btn btn-principal" href="#editar">Agregar a un ser querido</a></div>';
+      return;
+    }
+    const t = total(); indice = ((indice % t) + t) % t;
+    const clave = ajustes.estilo + "|" + indice + "|" + seres.length + "|" + innerWidth + "x" + innerHeight;
+    if (!forzar && clave === mostrado) return;
+    mostrado = clave;
+    let r;
+    if (ajustes.estilo === "juntos") r = vistaJuntos(seres.slice(indice*POR_GRUPO, (indice+1)*POR_GRUPO));
+    else {
+      const o = seres[indice];
+      r = document.createElement("div"); r.className = "retrato";
+      r.innerHTML = ajustes.estilo === "altar" ? altarSVG(o) : retratoSVG(o);
+      r.appendChild(fichaDatos(o));
+    }
+    escena.querySelectorAll(".retrato,.juntos,.vacio-altar").forEach(v => { v.classList.remove("visible"); setTimeout(() => v.remove(), 1600); });
+    escena.appendChild(r);
+    if (r.classList.contains("juntos")) ajustarJuntos(r);
+    requestAnimationFrame(() => requestAnimationFrame(() => r.classList.add("visible")));
+  }
+  function avanzar(paso){ indice += paso; siguienteEn = Date.now() + ajustes.tiempo*1000; pintarAltar(); }
+  function tic(){ if (!pausa && total() > 1 && Date.now() >= siguienteEn) avanzar(1); }
+
+  $("c-sig").onclick = () => avanzar(1);
+  $("c-ant").onclick = () => avanzar(-1);
+  $("c-pausa").onclick = () => { pausa = !pausa; $("c-pausa").setAttribute("aria-pressed", pausa); $("c-pausa").textContent = pausa ? "Seguir" : "Pausa"; siguienteEn = Date.now() + ajustes.tiempo*1000; };
+  $("c-estilo").onclick = () => { ajustes.estilo = ESTILOS[(ESTILOS.indexOf(ajustes.estilo)+1) % ESTILOS.length]; guardarAjustes(); marcar("estilo", ajustes.estilo); indice = 0; siguienteEn = Date.now() + ajustes.tiempo*1000; pintarAltar(true); };
+  const completa = () => document.fullscreenElement || document.webkitFullscreenElement;
+  $("c-completa").onclick = () => {
+    const el = document.documentElement;
+    if (completa()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(()=>{});
+  };
+  document.addEventListener("fullscreenchange", () => $("c-completa").textContent = completa() ? "Salir de pantalla completa" : "Pantalla completa");
+  if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $("c-completa").hidden = true;
+
+  // los botones aparecen al tocar la pantalla y se esconden solos
+  const va = $("vista-altar"); let esconder = null;
+  const mostrarControles = () => { va.classList.add("mostrar"); clearTimeout(esconder); esconder = setTimeout(() => va.classList.remove("mostrar"), 3500); };
+  va.addEventListener("pointermove", e => { if (e.pointerType === "mouse") mostrarControles(); });
+  va.addEventListener("pointerdown", e => { if (!e.target.closest(".controles")) mostrarControles(); });
+  addEventListener("keydown", e => {
+    if (va.hidden) return;
+    if (e.key === "ArrowRight") avanzar(1); else if (e.key === "ArrowLeft") avanzar(-1);
+    else if (e.key === " "){ e.preventDefault(); $("c-pausa").click(); }
+    else if (e.key === "Escape" && !completa()) location.hash = "#inicio";
+  });
+
+  // que la pantalla no se apague mientras el altar está encendido
+  let candado = null;
+  async function pedirCandado(){ try { if ("wakeLock" in navigator && !va.hidden && document.visibilityState === "visible") candado = await navigator.wakeLock.request("screen"); } catch {} }
+  document.addEventListener("visibilitychange", pedirCandado);
+
+  // pétalos de cempasúchil
+  const cv = $("petalos"), cx = cv.getContext("2d"); let petalos = [], anim = null;
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function medir(){ cv.width = cv.clientWidth*devicePixelRatio; cv.height = cv.clientHeight*devicePixelRatio; }
+  function nuevo(arriba){ return {x:Math.random()*cv.width, y:arriba? -20 : Math.random()*cv.height, r:(4+Math.random()*7)*devicePixelRatio,
+    v:(0.4+Math.random()*1.1)*devicePixelRatio, a:Math.random()*6.28, va:(Math.random()-.5)*.05, o:Math.random()*6.28,
+    c:["#f59a1b","#ffc35a","#f07c12","#e0337f"][Math.random()<.85?Math.floor(Math.random()*3):3]}; }
+  function cuadro(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    for (const p of petalos){
+      p.y += p.v; p.o += .02; p.x += Math.sin(p.o)*.6*devicePixelRatio; p.a += p.va;
+      if (p.y > cv.height+20) Object.assign(p, nuevo(true));
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.globalAlpha=.85; cx.fillStyle=p.c;
+      cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); cx.restore();
+    }
+    anim = requestAnimationFrame(cuadro);
+  }
+  function iniciarPetalos(){ medir(); petalos = Array.from({length: quieto?0:60}, ()=>nuevo(false)); cancelAnimationFrame(anim); if(!quieto) cuadro(); }
+  let redibujo = null;
+  addEventListener("resize", () => { if (va.hidden) return; medir(); clearTimeout(redibujo); redibujo = setTimeout(() => pintarAltar(), 300); });
+
+  // ---------- rutas ----------
+  async function ruta(){
+    const h = location.hash || "#inicio";
+    const enAltar = h.startsWith("#altar"), enEditar = h.startsWith("#editar");
+    $("vista-inicio").hidden = enAltar || enEditar; $("vista-editar").hidden = !enEditar; va.hidden = !enAltar;
+    clearInterval(reloj); cancelAnimationFrame(anim);
+    if (candado){ candado.release().catch(()=>{}); candado = null; }
+    if (enAltar){
+      mostrado = null; siguienteEn = Date.now() + ajustes.tiempo*1000;
+      pintarAltar(); iniciarPetalos(); reloj = setInterval(tic, 500); pedirCandado(); mostrarControles();
+    } else if (enEditar){
+      abrirEditar(decodeURIComponent(h.split("/")[1] || "")); scrollTo(0,0);
+    } else {
+      if (completa()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      pintarInicio(); pintarInstalar();
+    }
+  }
+  addEventListener("hashchange", ruta);
+  cargar().catch(() => {}).then(ruta);
+
+  // ---------- sin internet: el service worker guarda la app en el aparato ----------
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>

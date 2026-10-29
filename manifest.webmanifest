@@ -1,0 +1,18 @@
+{
+  "name": "Altar en casa",
+  "short_name": "Altar en casa",
+  "description": "Pon las fotos de tus seres queridos y proyecta tu altar de muertos. Las fotos se quedan en tu aparato.",
+  "lang": "es-MX",
+  "start_url": "./#inicio",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#170d1f",
+  "theme_color": "#170d1f",
+  "icons": [
+    {"src": "icono-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icono-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icono-mascara.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
